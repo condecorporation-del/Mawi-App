@@ -1,11 +1,13 @@
 import "server-only";
 
-import { readFileSync } from "fs";
-import { join } from "path";
-
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { streamText, tool } from "ai";
 import { z } from "zod";
+
+import { agentToolRegistry } from "./tools/registry";
+import { executeResolvedTool, ToolExecutionError } from "./tools/resolver";
+import { buildTenantContext } from "./brain/tenant-context";
+import { DOMAIN_KNOWLEDGE } from "./brain/domain-knowledge";
 
 // Wrapper that fixes overload resolution when building tools from a heterogeneous registry.
 // The registry is a readonly tuple of ToolDefinition<TInput,TOutput> with different generics;
@@ -16,15 +18,6 @@ function buildDynamicTool(description: string, parameters: z.ZodTypeAny, execute
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return tool({ description, parameters, execute } as any);
 }
-
-import { agentToolRegistry } from "./tools/registry";
-import { executeResolvedTool, ToolExecutionError } from "./tools/resolver";
-import { buildTenantContext } from "./brain/tenant-context";
-
-const domainKnowledge = readFileSync(
-  join(process.cwd(), "server/agent/brain/domain-knowledge.md"),
-  "utf-8",
-);
 
 export type AgentMessage = { role: "user" | "assistant"; content: string };
 
@@ -73,7 +66,7 @@ export async function runAgentStream({ ctx, tenantName, messages }: AgentStreamI
     buildTenantContext(ctx.tenantId),
   ]);
 
-  const systemPrompt = [basePrompt, domainKnowledge, tenantContext].join("\n\n---\n\n");
+  const systemPrompt = [basePrompt, DOMAIN_KNOWLEDGE, tenantContext].join("\n\n---\n\n");
 
   const enabledTools = Object.fromEntries(
     agentToolRegistry.map((toolDef) => {

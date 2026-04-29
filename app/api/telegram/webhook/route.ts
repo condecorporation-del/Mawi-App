@@ -2,6 +2,10 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 
+// Telegram responses wait for the full agent stream before replying.
+// Allow up to 60s to handle multi-step tool calling.
+export const maxDuration = 60;
+
 import { prisma } from "@/lib/db/prisma";
 import { runAgentStream } from "@/server/agent/agent-runtime";
 import {
