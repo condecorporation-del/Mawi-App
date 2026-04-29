@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/auth");
-  const isPublicRoute = isAuthRoute || pathname.startsWith("/api/auth");
+  const isPublicRoute = isAuthRoute || pathname.startsWith("/api/auth") || pathname.startsWith("/api/telegram");
 
   if (!user && !isPublicRoute) {
     const redirectUrl = request.nextUrl.clone();
