@@ -1,6 +1,7 @@
 "use client";
 
-import type { UIMessage } from "ai";
+type TextPart = { type: "text"; text: string };
+export type UIMessage = { id: string; role: "user" | "assistant"; parts: TextPart[] };
 
 type Props = { message: UIMessage };
 

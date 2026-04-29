@@ -39,7 +39,7 @@ export const listOverdueInvoicesTool: ToolDefinition<
   inputSchema: listOverdueInvoicesInputSchema,
   outputSchema: listOverdueInvoicesOutputSchema,
   riskLevel: "low",
-  requiredPermissions: ["invoice.manage"],
+  requiredPermissions: ["agent.chat"],
   requiresConfirmation: false,
   auditEvent: "agent.tool.finance_list_overdue_invoices.executed",
   version: "1.0.0",

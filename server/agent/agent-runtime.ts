@@ -1,11 +1,20 @@
 import "server-only";
 
+import { readFileSync } from "fs";
+import { join } from "path";
+
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { streamText, tool } from "ai";
 import { z } from "zod";
 
 import { agentToolRegistry } from "./tools/registry";
 import { executeResolvedTool, ToolExecutionError } from "./tools/resolver";
+import { buildTenantContext } from "./brain/tenant-context";
+
+const domainKnowledge = readFileSync(
+  join(process.cwd(), "server/agent/brain/domain-knowledge.md"),
+  "utf-8",
+);
 
 export type AgentMessage = { role: "user" | "assistant"; content: string };
 
@@ -18,6 +27,7 @@ type AgentStreamInput = {
 const anthropic = createAnthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL ?? "claude-3-5-haiku-latest";
 
 const SYSTEM_PROMPT = `Eres el asistente financiero y operativo de la constructora {tenantName}.
 
@@ -48,7 +58,12 @@ function getSafeToolErrorMessage(error: unknown) {
 }
 
 export async function runAgentStream({ ctx, tenantName, messages }: AgentStreamInput) {
-  const systemPrompt = SYSTEM_PROMPT.replace("{tenantName}", tenantName);
+  const [basePrompt, tenantContext] = await Promise.all([
+    Promise.resolve(SYSTEM_PROMPT.replace("{tenantName}", tenantName)),
+    buildTenantContext(ctx.tenantId),
+  ]);
+
+  const systemPrompt = [basePrompt, domainKnowledge, tenantContext].join("\n\n---\n\n");
 
   const enabledTools = Object.fromEntries(
     agentToolRegistry.map((toolDef) => {
@@ -57,7 +72,7 @@ export async function runAgentStream({ ctx, tenantName, messages }: AgentStreamI
         safeToolId,
         tool({
           description: toolDef.description,
-          inputSchema: toolDef.inputSchema as z.ZodTypeAny,
+          parameters: toolDef.inputSchema as z.ZodTypeAny,
           async execute(input: unknown) {
             try {
               const result = await executeResolvedTool(ctx, toolDef.name, input);
@@ -75,10 +90,13 @@ export async function runAgentStream({ ctx, tenantName, messages }: AgentStreamI
   );
 
   const stream = streamText({
-    model: anthropic("claude-sonnet-4-6"),
+    model: anthropic(ANTHROPIC_MODEL),
+    maxSteps: 5,
     system: `${systemPrompt}
 
-Herramientas disponibles — úsalas siempre en lugar de inventar datos:
+---
+
+## Herramientas disponibles — úsalas siempre en lugar de inventar datos
 
 LECTURA (sin confirmación):
 - project_list — lista proyectos con KPIs
@@ -103,7 +121,7 @@ Reglas para mutaciones:
 - Si una herramienta devuelve { "error": "..." }, explica el error claramente y pide el dato faltante.`,
     messages,
     tools: enabledTools,
-    maxOutputTokens: 2048,
+    maxTokens: 2048,
     temperature: 0.3,
   });
 

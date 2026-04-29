@@ -36,7 +36,7 @@ export const getProjectSummaryTool: ToolDefinition<
   inputSchema,
   outputSchema,
   riskLevel: "low",
-  requiredPermissions: ["project.manage", "expense.manage", "invoice.manage"],
+  requiredPermissions: ["agent.chat"],
   requiresConfirmation: false,
   auditEvent: "agent.tool.project_get_summary.executed",
   version: "1.0.0",

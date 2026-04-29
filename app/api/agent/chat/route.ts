@@ -157,16 +157,24 @@ export async function POST(req: NextRequest) {
 
   await appendMessage(ctx, { conversationId: convId, role: "user", content: message });
 
-  const stream = await runAgentStream({
-    ctx,
-    tenantName: membership.tenant.name,
-    messages,
-  });
+  try {
+    const stream = await runAgentStream({
+      ctx,
+      tenantName: membership.tenant.name,
+      messages,
+    });
 
-  const response = stream.toTextStreamResponse();
+    const response = stream.toTextStreamResponse();
 
-  const headers = new Headers(response.headers);
-  headers.set("X-Conversation-Id", convId);
+    const headers = new Headers(response.headers);
+    headers.set("X-Conversation-Id", convId);
 
-  return new Response(response.body, { headers, status: response.status });
+    return new Response(response.body, { headers, status: response.status });
+  } catch (error) {
+    console.error("[agent/chat] stream error:", error);
+    return NextResponse.json(
+      { error: "No pude generar respuesta del agente en este momento." },
+      { status: 502, headers: { "X-Conversation-Id": convId } },
+    );
+  }
 }

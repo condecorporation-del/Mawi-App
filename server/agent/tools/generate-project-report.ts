@@ -57,7 +57,7 @@ export const generateProjectReportTool: ToolDefinition<
   inputSchema,
   outputSchema,
   riskLevel: "low",
-  requiredPermissions: ["project.manage", "expense.manage", "invoice.manage", "report.ai_generate"],
+  requiredPermissions: ["agent.chat"],
   requiresConfirmation: false,
   auditEvent: "agent.tool.project_generate_report.executed",
   version: "1.0.0",

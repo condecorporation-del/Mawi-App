@@ -31,7 +31,7 @@ export const getSupplierBalanceTool: ToolDefinition<
   inputSchema: getSupplierBalanceInputSchema,
   outputSchema: getSupplierBalanceOutputSchema,
   riskLevel: "low",
-  requiredPermissions: ["supplier.manage", "invoice.manage", "expense.manage"],
+  requiredPermissions: ["agent.chat"],
   requiresConfirmation: false,
   auditEvent: "agent.tool.finance_get_supplier_balance.executed",
   version: "1.0.0",

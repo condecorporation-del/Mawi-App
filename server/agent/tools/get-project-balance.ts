@@ -34,7 +34,7 @@ export const getProjectBalanceTool: ToolDefinition<
   inputSchema: getProjectBalanceInputSchema,
   outputSchema: getProjectBalanceOutputSchema,
   riskLevel: "low",
-  requiredPermissions: ["project.manage", "invoice.manage", "expense.manage"],
+  requiredPermissions: ["agent.chat"],
   requiresConfirmation: false,
   auditEvent: "agent.tool.finance_get_project_balance.executed",
   version: "1.0.0",

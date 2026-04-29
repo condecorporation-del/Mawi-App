@@ -33,7 +33,7 @@ export const listProjectsTool: ToolDefinition<
   inputSchema,
   outputSchema,
   riskLevel: "low",
-  requiredPermissions: ["project.manage"],
+  requiredPermissions: ["agent.chat"],
   requiresConfirmation: false,
   auditEvent: "agent.tool.project_list.executed",
   version: "1.0.0",

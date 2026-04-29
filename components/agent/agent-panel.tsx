@@ -1,10 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { UIMessage } from "ai";
-
 import { AgentInput } from "./agent-input";
-import { AgentMessage } from "./agent-message";
+import { AgentMessage, type UIMessage } from "./agent-message";
 
 type ConfirmationBannerProps = {
   token:     string;
