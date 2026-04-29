@@ -73,7 +73,7 @@ export async function runAgentStream({ ctx, tenantName, messages }: AgentStreamI
         tool({
           description: toolDef.description,
           parameters: toolDef.inputSchema as z.ZodTypeAny,
-          async execute(input: unknown) {
+          async execute(input) {
             try {
               const result = await executeResolvedTool(ctx, toolDef.name, input);
               console.info(`[agent-tool] ok: ${toolDef.name}`);
