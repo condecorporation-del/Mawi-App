@@ -5,7 +5,21 @@ import { join } from "path";
 
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { streamText, tool } from "ai";
+import type { CoreTool } from "ai";
 import { z } from "zod";
+
+type AnyTool = CoreTool<z.ZodTypeAny, unknown>;
+
+// Wrapper that fixes overload resolution when building tools from a heterogeneous registry.
+// The registry is a readonly tuple of ToolDefinition<TInput, TOutput> with different generics;
+// TypeScript cannot pick the correct overload of tool() from a union of those types.
+function buildDynamicTool(
+  description: string,
+  parameters: z.ZodTypeAny,
+  execute: (input: unknown) => Promise<unknown>,
+): AnyTool {
+  return tool({ description, parameters, execute }) as AnyTool;
+}
 
 import { agentToolRegistry } from "./tools/registry";
 import { executeResolvedTool, ToolExecutionError } from "./tools/resolver";
@@ -70,10 +84,10 @@ export async function runAgentStream({ ctx, tenantName, messages }: AgentStreamI
       const safeToolId = toSafeToolId(toolDef.name);
       return [
         safeToolId,
-        tool({
-          description: toolDef.description,
-          parameters: toolDef.inputSchema as z.ZodTypeAny,
-          async execute(input) {
+        buildDynamicTool(
+          toolDef.description,
+          toolDef.inputSchema as z.ZodTypeAny,
+          async (input) => {
             try {
               const result = await executeResolvedTool(ctx, toolDef.name, input);
               console.info(`[agent-tool] ok: ${toolDef.name}`);
@@ -84,7 +98,7 @@ export async function runAgentStream({ ctx, tenantName, messages }: AgentStreamI
               return { error: safeMessage };
             }
           },
-        }),
+        ),
       ];
     }),
   );
