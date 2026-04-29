@@ -19,15 +19,15 @@
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.71",
-    "@ai-sdk/react": "^3.0.170",
+    "@ai-sdk/anthropic": "^1.2.12",
+    "@ai-sdk/react": "^1.2.12",
     "@deepgram/sdk": "^5.1.0",
     "@prisma/client": "^6.0.0",
     "@radix-ui/react-dialog": "^1.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.45.0",
-    "ai": "^6.0.168",
+    "ai": "^4.3.19",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "lucide-react": "^0.400.0",
