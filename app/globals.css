@@ -1,0 +1,121 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Glass surface — base elevation for all cards */
+  .glass-panel,
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Background blueprint CAD grid */
+  .blueprint-grid {
+    background-image:
+      linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Card holographic shine overlay */
+  .holographic-overlay {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 245, 255, 0.05) 0%,
+      transparent 50%,
+      rgba(0, 245, 255, 0.05) 100%
+    );
+  }
+
+  /* SVG progress rings — rotate so 0% starts at top */
+  .progress-ring {
+    transform: rotate(-90deg);
+  }
+
+  /* Neon glow utilities */
+  .neon-glow {
+    box-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
+  }
+  .neon-glow-cyan {
+    box-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
+  }
+  .neon-glow-violet {
+    box-shadow: 0 0 15px rgba(210, 187, 255, 0.28);
+  }
+  .neon-glow-error {
+    box-shadow: 0 0 15px rgba(255, 180, 171, 0.28);
+  }
+
+  /* Decorative neural separator line */
+  .neural-line {
+    background: linear-gradient(90deg, transparent, #00f5ff, transparent);
+    height: 1px;
+    width: 100%;
+  }
+
+  .material-symbols-outlined {
+    font-variation-settings:
+      "FILL" 0,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+  }
+
+  /* Scrollbar hide utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  :root {
+    /* shadcn/ui variables mapped to Stitch tokens for legacy components */
+    --background:             222 39% 9%;
+    --foreground:             224 36% 91%;
+    --card:                   221 27% 14%;
+    --card-foreground:        224 36% 91%;
+    --primary:                183 100% 96%;
+    --primary-foreground:     184 100% 11%;
+    --secondary:              258 100% 87%;
+    --secondary-foreground:   267 100% 28%;
+    --muted:                  220 26% 19%;
+    --muted-foreground:       180 15% 76%;
+    --accent:                 182 100% 50%;
+    --accent-foreground:      184 100% 11%;
+    --destructive:            6 100% 84%;
+    --destructive-foreground: 356 100% 21%;
+    --border:                 220 26% 19%;
+    --input:                  220 26% 19%;
+    --ring:                   182 100% 50%;
+    --radius:                0.25rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  /* Stitch base: ultra-dark obsidian with blueprint grid */
+  body {
+    background-color: #080e1a;
+    color: #dde2f3;
+    font-family: var(--font-inter), Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image:
+      linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* Text selection */
+  ::selection {
+    background-color: rgba(0, 245, 255, 0.2);
+    color: #e9feff;
+  }
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="64" fill="#0B0F14"/>
+  <rect x="80" y="210" width="352" height="32" rx="8" fill="#F59E0B"/>
+  <rect x="80" y="260" width="264" height="32" rx="8" fill="#F59E0B" opacity="0.6"/>
+  <rect x="80" y="310" width="176" height="32" rx="8" fill="#F59E0B" opacity="0.3"/>
+  <text x="256" y="196" font-family="sans-serif" font-size="72" font-weight="bold" fill="#F9FAFB" text-anchor="middle">CAI</text>
+</svg>

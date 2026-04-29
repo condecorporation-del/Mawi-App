@@ -1,0 +1,362 @@
+// Mawi AI — Prisma Schema
+// Reglas: tenant_id en cada tabla, soft delete (deleted_at), dinero en centavos (Int), enums en lowercase inglés.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum TenantRole {
+  owner
+  admin
+  member
+  viewer
+}
+
+enum ProjectStatus {
+  planning
+  active
+  on_hold
+  completed
+  cancelled
+}
+
+enum InvoiceType {
+  receivable
+  payable
+}
+
+enum InvoiceStatus {
+  pending_review
+  approved
+  paid
+  overdue
+  cancelled
+}
+
+enum ExpenseStatus {
+  pending_review
+  approved
+  rejected
+}
+
+enum ExpenseSource {
+  manual
+  agent
+}
+
+enum PaymentMethod {
+  transfer
+  check
+  cash
+  credit_card
+  other
+}
+
+enum AlertSeverity {
+  info
+  warning
+  critical
+}
+
+enum AlertStatus {
+  open
+  acknowledged
+  resolved
+}
+
+enum AlertType {
+  budget_overrun
+  payment_overdue
+  cash_flow_warning
+  margin_warning
+}
+
+enum ActorType {
+  user
+  system
+  agent
+}
+
+enum MessageRole {
+  user
+  assistant
+  tool
+}
+
+// ─── Multi-tenant core ────────────────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  rfc       String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships   Membership[]
+  clients       Client[]
+  suppliers     Supplier[]
+  projects      Project[]
+  invoices      Invoice[]
+  expenses      Expense[]
+  payments      Payment[]
+  alerts        Alert[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+  conversations Conversation[]
+
+  @@map("tenants")
+}
+
+model Membership {
+  id        String     @id @default(uuid())
+  tenantId  String     @map("tenant_id")
+  userId    String     @map("user_id")
+  role      TenantRole @default(viewer)
+  isActive  Boolean    @default(true) @map("is_active")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, userId])
+  @@map("memberships")
+}
+
+// ─── Financial entities ───────────────────────────────────────────────────────
+
+model Client {
+  id        String    @id @default(uuid())
+  tenantId  String    @map("tenant_id")
+  name      String
+  rfc       String?
+  email     String?
+  phone     String?
+  address   String?
+  createdBy String    @map("created_by")
+  updatedBy String    @map("updated_by")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  projects Project[]
+  invoices Invoice[]
+
+  @@map("clients")
+}
+
+model Supplier {
+  id        String    @id @default(uuid())
+  tenantId  String    @map("tenant_id")
+  name      String
+  rfc       String?
+  email     String?
+  phone     String?
+  address   String?
+  createdBy String    @map("created_by")
+  updatedBy String    @map("updated_by")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  invoices Invoice[]
+  expenses Expense[]
+
+  @@map("suppliers")
+}
+
+model Project {
+  id          String        @id @default(uuid())
+  tenantId    String        @map("tenant_id")
+  clientId    String?       @map("client_id")
+  code        String
+  name        String
+  description String?
+  status      ProjectStatus @default(planning)
+  budgetCents Int           @default(0) @map("budget_cents")
+  startsAt    DateTime?     @map("starts_at")
+  endsAt      DateTime?     @map("ends_at")
+  archivedAt  DateTime?     @map("archived_at")
+  createdBy   String        @map("created_by")
+  updatedBy   String        @map("updated_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  client   Client?   @relation(fields: [clientId], references: [id])
+  expenses Expense[]
+  invoices Invoice[]
+
+  @@unique([tenantId, code])
+  @@map("projects")
+}
+
+model Invoice {
+  id         String        @id @default(uuid())
+  tenantId   String        @map("tenant_id")
+  type       InvoiceType
+  status     InvoiceStatus @default(pending_review)
+  number     String
+  clientGenId String?      @map("client_gen_id")
+  clientId   String?       @map("client_id")
+  supplierId String?       @map("supplier_id")
+  projectId  String?       @map("project_id")
+  issueDate  DateTime      @map("issue_date")
+  dueDate    DateTime?     @map("due_date")
+  totalCents Int           @map("total_cents")
+  createdBy  String        @map("created_by")
+  updatedBy  String        @map("updated_by")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+  deletedAt  DateTime?     @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  client   Client?   @relation(fields: [clientId], references: [id])
+  supplier Supplier? @relation(fields: [supplierId], references: [id])
+  project  Project?  @relation(fields: [projectId], references: [id])
+  payments Payment[]
+
+  @@unique([tenantId, clientGenId])
+  @@map("invoices")
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  tenantId    String        @map("tenant_id")
+  invoiceId   String        @map("invoice_id")
+  amountCents Int           @map("amount_cents")
+  paidAt      DateTime      @map("paid_at")
+  method      PaymentMethod @default(transfer)
+  reference   String?
+  createdBy   String        @map("created_by")
+  updatedBy   String        @map("updated_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+
+  @@map("payments")
+}
+
+model Expense {
+  id          String        @id @default(uuid())
+  tenantId    String        @map("tenant_id")
+  projectId   String        @map("project_id")
+  supplierId  String?       @map("supplier_id")
+  description String
+  totalCents  Int           @map("total_cents")
+  expenseDate DateTime      @map("expense_date")
+  status      ExpenseStatus @default(pending_review)
+  source      ExpenseSource @default(manual)
+  clientGenId String?       @map("client_gen_id")
+  createdBy   String        @map("created_by")
+  updatedBy   String        @map("updated_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  deletedAt   DateTime?     @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  project  Project   @relation(fields: [projectId], references: [id])
+  supplier Supplier? @relation(fields: [supplierId], references: [id])
+
+  @@unique([tenantId, clientGenId])
+  @@map("expenses")
+}
+
+// ─── Alerts & Notifications ───────────────────────────────────────────────────
+
+model Alert {
+  id          String        @id @default(uuid())
+  tenantId    String        @map("tenant_id")
+  type        AlertType
+  severity    AlertSeverity @default(info)
+  status      AlertStatus   @default(open)
+  title       String
+  description String
+  entityType  String?       @map("entity_type")
+  entityId    String?       @map("entity_id")
+  triggeredAt DateTime      @default(now()) @map("triggered_at")
+  resolvedAt  DateTime?     @map("resolved_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("alerts")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  tenantId  String    @map("tenant_id")
+  userId    String    @map("user_id")
+  title     String
+  body      String
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("notifications")
+}
+
+// ─── AI Agent ─────────────────────────────────────────────────────────────────
+
+model Conversation {
+  id        String    @id @default(uuid())
+  tenantId  String    @map("tenant_id")
+  userId    String    @map("user_id")
+  title     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String      @id @default(uuid())
+  conversationId String      @map("conversation_id")
+  tenantId       String      @map("tenant_id")
+  role           MessageRole
+  content        String
+  metadata       Json?
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+
+  @@map("messages")
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String    @id @default(uuid())
+  tenantId    String    @map("tenant_id")
+  actorUserId String?   @map("actor_user_id")
+  actorType   ActorType @default(user)
+  entityType  String    @map("entity_type")
+  entityId    String?   @map("entity_id")
+  action      String
+  before      Json?
+  after       Json?
+  metadata    Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@map("audit_logs")
+}
