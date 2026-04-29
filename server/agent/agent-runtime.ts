@@ -5,20 +5,16 @@ import { join } from "path";
 
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { streamText, tool } from "ai";
-import type { CoreTool } from "ai";
 import { z } from "zod";
 
-type AnyTool = CoreTool<z.ZodTypeAny, unknown>;
-
 // Wrapper that fixes overload resolution when building tools from a heterogeneous registry.
-// The registry is a readonly tuple of ToolDefinition<TInput, TOutput> with different generics;
-// TypeScript cannot pick the correct overload of tool() from a union of those types.
-function buildDynamicTool(
-  description: string,
-  parameters: z.ZodTypeAny,
-  execute: (input: unknown) => Promise<unknown>,
-): AnyTool {
-  return tool({ description, parameters, execute }) as AnyTool;
+// The registry is a readonly tuple of ToolDefinition<TInput,TOutput> with different generics;
+// TypeScript cannot resolve the correct overload of tool() from a union of those input schemas,
+// so we escape via `any` only at this boundary — runtime behavior is unaffected.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildDynamicTool(description: string, parameters: z.ZodTypeAny, execute: (input: unknown) => Promise<unknown>): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return tool({ description, parameters, execute } as any);
 }
 
 import { agentToolRegistry } from "./tools/registry";
